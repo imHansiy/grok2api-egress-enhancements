@@ -128,7 +128,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cpa-${{ matrix.target }}
-          path: cpa-${{ matrix.target }}.${{ matrix.ext }}
+          path: cpa/cpa-${{ matrix.target }}.${{ matrix.ext }}
           if-no-files-found: error
 
   release:
