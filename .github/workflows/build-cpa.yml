@@ -34,38 +34,26 @@ jobs:
   build:
     name: Build ${{ matrix.target }}
     needs: test
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          # macOS arm64 runner builds darwin/arm64 natively.
-          - os: macos-latest
-            target: darwin-arm64
-            goos: darwin
-            goarch: arm64
-            ext: dylib
-          # Intel macOS runner builds darwin/amd64 natively (CGO works).
-          - os: macos-13
-            target: darwin-amd64
-            goos: darwin
-            goarch: amd64
-            ext: dylib
-          - os: ubuntu-latest
-            target: linux-amd64
+          - target: linux-amd64
             goos: linux
             goarch: amd64
             ext: so
-          - os: ubuntu-latest
-            target: linux-arm64
+            cc: ""
+          - target: linux-arm64
             goos: linux
             goarch: arm64
             ext: so
-          - os: ubuntu-latest
-            target: windows-amd64
+            cc: aarch64-linux-gnu-gcc
+          - target: windows-amd64
             goos: windows
             goarch: amd64
             ext: dll
+            cc: x86_64-w64-mingw32-gcc
     defaults:
       run:
         working-directory: cpa
@@ -80,46 +68,19 @@ jobs:
         run: go mod tidy
 
       - name: Install cross compilers
-        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-mingw-w64-x86-64 gcc-aarch64-linux-gnu
 
-      - name: Build plugin (darwin)
-        if: matrix.goos == 'darwin'
+      - name: Build plugin
         env:
           CGO_ENABLED: '1'
-          GOOS: darwin
+          GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+          CC: ${{ matrix.cc }}
         run: go build -buildmode=c-shared -o "cpa-${{ matrix.target }}.${{ matrix.ext }}" .
 
-      - name: Build plugin (linux arm64)
-        if: matrix.goos == 'linux' && matrix.goarch == 'arm64'
-        env:
-          CGO_ENABLED: '1'
-          GOOS: linux
-          GOARCH: arm64
-          CC: aarch64-linux-gnu-gcc
-        run: go build -buildmode=c-shared -o "cpa-${{ matrix.target }}.${{ matrix.ext }}" .
-
-      - name: Build plugin (linux amd64)
-        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
-        env:
-          CGO_ENABLED: '1'
-          GOOS: linux
-          GOARCH: amd64
-        run: go build -buildmode=c-shared -o "cpa-${{ matrix.target }}.${{ matrix.ext }}" .
-
-      - name: Build plugin (windows)
-        if: matrix.goos == 'windows'
-        env:
-          CGO_ENABLED: '1'
-          GOOS: windows
-          GOARCH: amd64
-          CC: x86_64-w64-mingw32-gcc
-        run: go build -buildmode=c-shared -o "cpa-${{ matrix.target }}.${{ matrix.ext }}" .
-
-      - name: Verify ABI exports
+      - name: Verify output
         run: |
           file "cpa-${{ matrix.target }}.${{ matrix.ext }}"
           ls -la "cpa-${{ matrix.target }}.${{ matrix.ext }}"
