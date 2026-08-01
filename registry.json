@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "plugins": [
+    {
+      "id": "cpa",
+      "name": "CPA Egress Quality Guard",
+      "description": "CLIProxyAPI plugin that ports the grok2api egress quality-guard design: measures per-credential output tokens/second (audit-panel parity), immediately quarantines credentials that exceed the hard TPS threshold (downgraded/abnormal buffering), triggers a fixed-prompt active re-probe on soft hits, isolates quarantined credentials in scheduler.pick with minimum-healthy protection, and automatically recovers credentials after a healthy re-probe.",
+      "author": "imHansiy",
+      "version": "0.1.0",
+      "repository": "https://github.com/imHansiy/grok2api-egress-enhancements",
+      "logo": "",
+      "homepage": "https://github.com/imHansiy/grok2api-egress-enhancements/tree/cpa/cpa",
+      "license": "MIT",
+      "tags": ["quality-guard", "scheduler", "circuit-breaker", "grok"]
+    }
+  ]
+}

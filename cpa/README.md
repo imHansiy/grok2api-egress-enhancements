@@ -66,7 +66,35 @@ go build -buildmode=c-shared -o cpa.dylib .
 
 ## 安装到 CLIProxyAPI
 
-1. 将 `cpa.dylib` 放入宿主插件目录：`plugins/darwin/arm64/cpa.dylib`（或 `plugins/`）。
+### 方式一：插件商店安装（推荐）
+
+本仓库提供 [registry.json](../registry.json) 插件商店注册文件。把它追加到
+CLIProxyAPI 的 `plugins.store-sources` 列表：
+
+```yaml
+plugins:
+  enabled: true
+  dir: "plugins"
+  store-sources:
+    - "https://raw.githubusercontent.com/imHansiy/grok2api-egress-enhancements/cpa/registry.json"
+```
+
+然后通过管理 API 安装：
+
+```bash
+curl -X POST -H "Authorization: Bearer <management-key>" \
+  http://localhost:8317/v0/management/plugin-store/cpa/install
+```
+
+宿主会下载 GitHub latest release 资产（`cpa_<version>_<goos>_<goarch>.zip`），
+校验 `checksums.txt` 后写入插件目录并热加载。前提是仓库存在 `v*` tag 的 Release
+（GitHub Actions 在打 tag 时自动按商店格式打包发布）。
+
+### 方式二：手动放置动态库
+
+1. 从 GitHub Actions artifacts 或 Release 下载对应平台的动态库，
+   放入宿主插件目录：`plugins/linux/amd64/cpa.so`（Linux）或
+   `plugins/windows/amd64/cpa.dll`（Windows）。
 2. 在 `config.yaml` 开启插件：
 
 ```yaml

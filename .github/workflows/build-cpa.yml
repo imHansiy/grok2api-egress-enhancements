@@ -93,7 +93,7 @@ jobs:
           if-no-files-found: error
 
   release:
-    name: Release
+    name: Release (plugin store format)
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
@@ -105,16 +105,32 @@ jobs:
         with:
           path: artifacts
 
-      - name: Package release assets
+      - name: Package release assets (plugin store format)
         run: |
+          set -eu
+          VERSION="${GITHUB_REF_NAME#v}"
           mkdir -p dist
-          for d in artifacts/cpa-*/; do
-            name=$(basename "$d")
-            file=$(find "$d" -type f | head -1)
-            cp "$file" "dist/${name}"
-          done
-          (cd dist && shasum -a 256 * > checksums.txt)
+          # Matrix of artifact name -> (goos, goarch, extension)
+          package() {
+            artifact="$1"; goos="$2"; goarch="$3"; ext="$4"
+            lib="$(find "artifacts/$artifact" -type f | head -1)"
+            zip_name="cpa_${VERSION}_${goos}_${goarch}.zip"
+            # Plugin ID is derived from the library filename: must be cpa.<ext>.
+            # The zip must contain the library at its root (no subdirectory).
+            mkdir -p stage
+            cp "$lib" "stage/cpa.$ext"
+            (cd stage && zip -q "../dist/$zip_name" "cpa.$ext")
+            rm -rf stage
+            echo "packed $zip_name"
+          }
+          package cpa-linux-amd64   linux   amd64   so
+          package cpa-linux-arm64   linux   arm64   so
+          package cpa-windows-amd64 windows amd64   dll
+          # checksums.txt over the zips (sha256 + double space + filename)
+          (cd dist && shasum -a 256 *.zip > checksums.txt)
           ls -la dist
+          echo "--- checksums.txt ---"
+          cat dist/checksums.txt
 
       - name: Create release
         uses: softprops/action-gh-release@v2
