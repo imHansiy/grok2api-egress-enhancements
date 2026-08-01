@@ -1,0 +1,159 @@
+name: build-cpa
+
+on:
+  push:
+    branches:
+      - cpa
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test (unit)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cpa
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Tidy modules
+        run: go mod tidy
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test
+        run: go test ./... -v
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS arm64 runner builds darwin/arm64 natively.
+          - os: macos-latest
+            target: darwin-arm64
+            goos: darwin
+            goarch: arm64
+            ext: dylib
+          # Intel macOS runner builds darwin/amd64 natively (CGO works).
+          - os: macos-13
+            target: darwin-amd64
+            goos: darwin
+            goarch: amd64
+            ext: dylib
+          - os: ubuntu-latest
+            target: linux-amd64
+            goos: linux
+            goarch: amd64
+            ext: so
+          - os: ubuntu-latest
+            target: linux-arm64
+            goos: linux
+            goarch: arm64
+            ext: so
+          - os: ubuntu-latest
+            target: windows-amd64
+            goos: windows
+            goarch: amd64
+            ext: dll
+    defaults:
+      run:
+        working-directory: cpa
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Install cross compilers
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-x86-64 gcc-aarch64-linux-gnu
+
+      - name: Build plugin (darwin)
+        if: matrix.goos == 'darwin'
+        env:
+          CGO_ENABLED: '1'
+          GOOS: darwin
+          GOARCH: ${{ matrix.goarch }}
+        run: go build -buildmode=c-shared -o "cpa-${{ matrix.target }}.${{ matrix.ext }}" .
+
+      - name: Build plugin (linux arm64)
+        if: matrix.goos == 'linux' && matrix.goarch == 'arm64'
+        env:
+          CGO_ENABLED: '1'
+          GOOS: linux
+          GOARCH: arm64
+          CC: aarch64-linux-gnu-gcc
+        run: go build -buildmode=c-shared -o "cpa-${{ matrix.target }}.${{ matrix.ext }}" .
+
+      - name: Build plugin (linux amd64)
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        env:
+          CGO_ENABLED: '1'
+          GOOS: linux
+          GOARCH: amd64
+        run: go build -buildmode=c-shared -o "cpa-${{ matrix.target }}.${{ matrix.ext }}" .
+
+      - name: Build plugin (windows)
+        if: matrix.goos == 'windows'
+        env:
+          CGO_ENABLED: '1'
+          GOOS: windows
+          GOARCH: amd64
+          CC: x86_64-w64-mingw32-gcc
+        run: go build -buildmode=c-shared -o "cpa-${{ matrix.target }}.${{ matrix.ext }}" .
+
+      - name: Verify ABI exports
+        run: |
+          file "cpa-${{ matrix.target }}.${{ matrix.ext }}"
+          ls -la "cpa-${{ matrix.target }}.${{ matrix.ext }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpa-${{ matrix.target }}
+          path: cpa-${{ matrix.target }}.${{ matrix.ext }}
+          if-no-files-found: error
+
+  release:
+    name: Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Package release assets
+        run: |
+          mkdir -p dist
+          for d in artifacts/cpa-*/; do
+            name=$(basename "$d")
+            file=$(find "$d" -type f | head -1)
+            cp "$file" "dist/${name}"
+          done
+          (cd dist && shasum -a 256 * > checksums.txt)
+          ls -la dist
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
