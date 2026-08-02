@@ -58,7 +58,7 @@ func managementRegistration() managementRegistrationResult {
 			{Method: "GET", Path: "/plugins/cpa/overview"},
 		},
 		Resources: []managementResource{
-			{Path: "/", Menu: "CPA Quality Guard", Description: "Credential quality-guard dashboard."},
+			{Path: "/panel", Menu: "CPA Quality Guard", Description: "Credential quality-guard dashboard."},
 		},
 	}
 }
@@ -78,7 +78,9 @@ func dispatchManagement(req managementRequest) managementResponse {
 	path := strings.TrimPrefix(req.Path, "/v0/management")
 	path = strings.TrimPrefix(path, "/v0/resource/plugins/cpa")
 	path = strings.TrimPrefix(path, "/plugins/cpa")
-	if path == "" || path == "/" {
+	// Resource panel: the registered resource path is /panel. Accept both
+	// "/panel" and the legacy root "/" so direct bookmarks keep working.
+	if path == "" || path == "/" || path == "/panel" {
 		// Resource root: dashboard page.
 		if strings.HasPrefix(req.Path, "/v0/resource") || req.Method == "GET" {
 			return managementResponse{

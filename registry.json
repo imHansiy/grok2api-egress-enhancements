@@ -6,7 +6,7 @@
       "name": "CPA Egress Quality Guard",
       "description": "EN: CLIProxyAPI plugin that ports the grok2api egress quality-guard design to native CPA capabilities. Measures each credential's output tokens/second using the audit-panel formula (output tokens including reasoning tokens over generation time), immediately quarantines credentials that exceed the hard TPS threshold (downgraded/abnormal buffering), triggers a fixed-prompt active re-probe on soft hits, excludes quarantined credentials in scheduler.pick with minimum-healthy protection, and automatically recovers credentials after a healthy re-probe. Provides a management dashboard with manual quarantine/release/probe and hot-reloadable policy. | 中文: 面向 CLIProxyAPI 的 CPA 出口质量守护插件，将 grok2api 出口质量守护设计移植为 CPA 原生能力。按面板同口径计算每个凭证的输出 Token/秒（输出 Token 含推理 Token，除以生成耗时），超过硬阈值（异常高速，说明被降智/异常缓冲）立即隔离；低于软阈值触发固定 Prompt 主动复测，连续命中后隔离；调度时从候选中剔除隔离凭证，并提供最低健康凭证数保护；复测健康后自动恢复。内置管理面板，支持手动隔离/释放/触发复测与策略热加载。",
       "author": "imHansiy",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "repository": "https://github.com/imHansiy/grok2api-egress-enhancements",
       "logo": "",
       "homepage": "https://github.com/imHansiy/grok2api-egress-enhancements/tree/main/cpa",

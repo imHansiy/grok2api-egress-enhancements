@@ -235,7 +235,7 @@ func pluginRegistration() registration {
 		SchemaVersion: pluginabi.SchemaVersion,
 		Metadata: pluginapi.Metadata{
 			Name:             "cpa",
-			Version:          "0.1.0",
+			Version:          "0.1.1",
 			Author:           "imHansiy",
 			GitHubRepository: "https://github.com/imHansiy/grok2api-egress-enhancements",
 			Logo:             "",
