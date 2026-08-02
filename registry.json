@@ -7,9 +7,9 @@
       "description": "EN: CLIProxyAPI operations page and egress quality guard for grok2api. Embeds a compact management UI for live guard status, statistics and events; node add/edit/delete/enable/disable/search and batch operations; connectivity checks and real-model quality tests; editable active/passive/hybrid guard policy; and server-side grok2api administrator login so proxy URLs and administrator credentials are never returned to the browser. Manages only grok_build nodes; saved proxy URLs are write-only. | 中文: 面向 grok2api 的 CLIProxyAPI 运维页面与出口质量守护插件。内置紧凑的管理界面，提供实时守护状态、统计与事件；节点的新增、编辑、删除、启用、禁用、搜索与批量操作；连通性检查与真实模型质量测试；可编辑的主动/被动/混合守护策略；以及服务端 grok2api 管理员登录，确保代理地址和管理员凭据永不返回浏览器。仅管理 grok_build 节点；已保存的代理地址为只写字段。",
       "author": "lij768423-svg",
       "version": "0.3.0",
-      "repository": "https://github.com/lij768423-svg/grok2api-egress-enhancements",
+      "repository": "https://github.com/imHansiy/grok2api-egress-enhancements",
       "logo": "",
-      "homepage": "https://github.com/lij768423-svg/grok2api-egress-enhancements/tree/main/cpa-plugin",
+      "homepage": "https://github.com/imHansiy/grok2api-egress-enhancements/tree/registry/cpa-plugin",
       "license": "MIT",
       "tags": ["grok2api", "egress", "quality-guard", "management-ui"]
     }
