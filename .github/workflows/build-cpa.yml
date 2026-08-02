@@ -3,7 +3,7 @@ name: build-cpa
 on:
   push:
     branches:
-      - cpa
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
