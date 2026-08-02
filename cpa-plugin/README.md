@@ -13,33 +13,6 @@ grok2api egress quality guard. It provides:
 The UI intentionally manages only `grok_build` nodes. Saved proxy URLs are
 write-only: editing with an empty proxy field preserves the existing value.
 
-## Install from plugin store
-
-This repository publishes a plugin-store registry
-([`registry.json`](../registry.json)). Add it to CLIProxyAPI's
-`plugins.store-sources` list:
-
-```yaml
-plugins:
-  enabled: true
-  dir: "plugins"
-  store-sources:
-    - "https://raw.githubusercontent.com/lij768423-svg/grok2api-egress-enhancements/main/registry.json"
-```
-
-Then install through the management API:
-
-```bash
-curl -X POST -H "Authorization: Bearer <management-key>" \
-  http://localhost:8317/v0/management/plugin-store/grok2api-egress/install
-```
-
-The host downloads the GitHub release assets
-(`grok2api-egress_<version>_<goos>_<goarch>.zip`), verifies `checksums.txt`,
-writes the plugin library, and hot-reloads. Prebuilt multi-platform assets are
-published automatically by the `build-grok2api-egress` workflow when a `v*`
-tag is pushed (see `.github/workflows/build-grok2api-egress.yml`).
-
 ## Build
 
 Requirements: Go 1.26+, CGO, and a C compiler.

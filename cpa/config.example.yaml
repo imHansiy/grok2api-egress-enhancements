@@ -1,0 +1,42 @@
+# CPA 插件配置示例 —— 放入 CLIProxyAPI config.yaml 的 plugins 段
+plugins:
+  enabled: true
+  dir: "plugins"
+  configs:
+    cpa:
+      enabled: true
+      priority: 1
+
+      # 检测模式：passive（仅被动审计）/ active（软阈值触发主动复测）
+      mode: "active"
+      # 完全禁用主动复测（只做被动审计）
+      passive_only: false
+
+      # 被动阈值（output tokens per second，含推理 Token，与 grok2api 面板同口径）
+      hard_tps: 1000
+      soft_tps: 500
+      # 复测失败后连续软命中多少次才隔离
+      soft_hits_before_quarantine: 2
+      # 连续请求/探测错误达到多少次强制隔离（0 禁用）
+      max_consecutive_errors: 5
+
+      # 隔离时长与恢复延迟
+      quarantine_duration: "30m"
+      recovery_delay: "2m"
+      # 最低健康凭证数保护：低于此值时不再隔离，避免服务饿死
+      min_healthy: 3
+
+      # 主动复测参数
+      probe_model: "grok-3"
+      probe_prompt: "Reply with the exact marker QUALITY_OK and nothing else."
+      probe_expected: "QUALITY_OK"
+      probe_max_output_tokens: 64
+      probe_hard_tps: 1000
+      probe_soft_tps: 500
+      probe_timeout: "60s"
+      override_ttl: "30s"
+
+      # 信息性审计窗口
+      monitor_interval: "10s"
+      # 输出 Token 是否含推理 Token（面板同口径，建议 true）
+      include_reasoning_tokens: true

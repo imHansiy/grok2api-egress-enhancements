@@ -2,16 +2,16 @@
   "schema_version": 1,
   "plugins": [
     {
-      "id": "grok2api-egress",
-      "name": "CPA Grok2API Egress",
-      "description": "EN: CLIProxyAPI operations page and egress quality guard for grok2api. Embeds a compact management UI for live guard status, statistics and events; node add/edit/delete/enable/disable/search and batch operations; connectivity checks and real-model quality tests; editable active/passive/hybrid guard policy; and server-side grok2api administrator login so proxy URLs and administrator credentials are never returned to the browser. Manages only grok_build nodes; saved proxy URLs are write-only. | 中文: 面向 grok2api 的 CLIProxyAPI 运维页面与出口质量守护插件。内置紧凑的管理界面，提供实时守护状态、统计与事件；节点的新增、编辑、删除、启用、禁用、搜索与批量操作；连通性检查与真实模型质量测试；可编辑的主动/被动/混合守护策略；以及服务端 grok2api 管理员登录，确保代理地址和管理员凭据永不返回浏览器。仅管理 grok_build 节点；已保存的代理地址为只写字段。",
-      "author": "lij768423-svg",
-      "version": "0.3.0",
+      "id": "cpa",
+      "name": "CPA Egress Quality Guard",
+      "description": "EN: CLIProxyAPI plugin that ports the grok2api egress quality-guard design to native CPA capabilities. Measures each credential's output tokens/second using the audit-panel formula (output tokens including reasoning tokens over generation time), immediately quarantines credentials that exceed the hard TPS threshold (downgraded/abnormal buffering), triggers a fixed-prompt active re-probe on soft hits, excludes quarantined credentials in scheduler.pick with minimum-healthy protection, and automatically recovers credentials after a healthy re-probe. Provides a management dashboard with manual quarantine/release/probe and hot-reloadable policy. | 中文: 面向 CLIProxyAPI 的 CPA 出口质量守护插件，将 grok2api 出口质量守护设计移植为 CPA 原生能力。按面板同口径计算每个凭证的输出 Token/秒（输出 Token 含推理 Token，除以生成耗时），超过硬阈值（异常高速，说明被降智/异常缓冲）立即隔离；低于软阈值触发固定 Prompt 主动复测，连续命中后隔离；调度时从候选中剔除隔离凭证，并提供最低健康凭证数保护；复测健康后自动恢复。内置管理面板，支持手动隔离/释放/触发复测与策略热加载。",
+      "author": "imHansiy",
+      "version": "0.1.0",
       "repository": "https://github.com/imHansiy/grok2api-egress-enhancements",
       "logo": "",
-      "homepage": "https://github.com/imHansiy/grok2api-egress-enhancements/tree/registry/cpa-plugin",
+      "homepage": "https://github.com/imHansiy/grok2api-egress-enhancements/tree/main/cpa",
       "license": "MIT",
-      "tags": ["grok2api", "egress", "quality-guard", "management-ui"]
+      "tags": ["quality-guard", "scheduler", "circuit-breaker", "cpa"]
     }
   ]
 }
