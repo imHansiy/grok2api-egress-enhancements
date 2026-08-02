@@ -1,6 +1,6 @@
-# grok2api 出口增强补丁
+# Grok2API & CPA 出口质量守护
 
-这是一个非官方增强分发仓库，为 [chenyme/grok2api](https://github.com/chenyme/grok2api) 增加固定代理快速恢复和可选的出口质量守护。仓库不复制上游完整源码，只发布可审计的 Git patch、功能说明、AI 合并指南和可选 CPA 管理插件源码。
+这是一个非官方增强分发仓库：为 [chenyme/grok2api](https://github.com/chenyme/grok2api) 提供固定代理快速恢复和出口质量守护补丁，同时提供零 Grok2API 运行时依赖的纯 CPA 原生插件。仓库不复制上游完整源码，只发布可审计的 Git patch、功能说明、AI 指南和 CPA 插件源码。
 
 当前补丁基于：
 
@@ -39,9 +39,9 @@
 - `QUALITY_GUARD_NODE_IDS` 留空时自动发现所有已启用的代理 Build 节点；状态文件同时发布已解析节点，兼容旧版管理页面。
 - 独立 Python sidecar、Docker Compose、systemd、安全说明和中英文文档。
 
-### CPA 管理插件
+### CPA 原生出口守护插件
 
-`cpa-plugin/go` 提供可选的 CLIProxyAPI 动态插件，支持节点增删改、批量启停/删除、连通性检测、真实质量检测、策略编辑、统计事件和深浅色模式。构建与部署方法见 [cpa-plugin/README.md](./cpa-plugin/README.md)。
+`cpa-plugin/` 现为 **v1.0.3 纯 CPA 原生插件**，不依赖、不连接 Grok2API 运行时。它通过 CPA Host API 读取认证文件和 Usage 事件，把账号的 `proxy_url` 粘性绑定到出口节点，并提供节点 CRUD、批量操作、连通性/真实质量检测、隔离迁号、策略热加载、统计事件和深浅色管理 UI。构建与部署方法见 [cpa-plugin/README.md](./cpa-plugin/README.md)，代理规划、账号容量、隔离恢复和强制住宅 IP 轮换见 [AI 部署与运维指南](./cpa-plugin/AI_USAGE_GUIDE.md)。
 
 质量守护是启发式熔断器，不是模型能力鉴定器。中间层缓冲、已有文件、长常量或缓存内容可能造成异常高瞬时 Token/s。硬阈值策略偏激进，可按链路调高 `hard_tps`；软阈值仍以固定 Prompt 复测确认。
 
