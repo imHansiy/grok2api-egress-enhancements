@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "plugins": [
+    {
+      "id": "grok2api-egress",
+      "name": "CPA Grok2API Egress",
+      "description": "CLIProxyAPI operations page and egress quality guard for grok2api. Embeds a compact management UI for live guard status, statistics and events; node add/edit/delete/enable/disable/search and batch operations; connectivity checks and real-model quality tests; editable active/passive/hybrid guard policy; and server-side grok2api administrator login so proxy URLs and administrator credentials are never returned to the browser. Manages only grok_build nodes; saved proxy URLs are write-only.",
+      "author": "lij768423-svg",
+      "version": "0.3.0",
+      "repository": "https://github.com/lij768423-svg/grok2api-egress-enhancements",
+      "logo": "",
+      "homepage": "https://github.com/lij768423-svg/grok2api-egress-enhancements/tree/main/cpa-plugin",
+      "license": "MIT",
+      "tags": ["grok2api", "egress", "quality-guard", "management-ui"]
+    }
+  ]
+}

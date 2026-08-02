@@ -1,0 +1,123 @@
+name: build-grok2api-egress
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test (unit)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cpa-plugin/go
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: go test
+        run: go test ./...
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-amd64
+            goos: linux
+            goarch: amd64
+            ext: so
+            cc: ""
+          - target: linux-arm64
+            goos: linux
+            goarch: arm64
+            ext: so
+            cc: aarch64-linux-gnu-gcc
+          - target: windows-amd64
+            goos: windows
+            goarch: amd64
+            ext: dll
+            cc: x86_64-w64-mingw32-gcc
+    defaults:
+      run:
+        working-directory: cpa-plugin/go
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Install cross compilers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-x86-64 gcc-aarch64-linux-gnu
+
+      - name: Build plugin
+        env:
+          CGO_ENABLED: '1'
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CC: ${{ matrix.cc }}
+        run: go build -buildmode=c-shared -trimpath -o "grok2api-egress-${{ matrix.target }}.${{ matrix.ext }}" .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: grok2api-egress-${{ matrix.target }}
+          path: cpa-plugin/go/grok2api-egress-${{ matrix.target }}.${{ matrix.ext }}
+          if-no-files-found: error
+
+  release:
+    name: Release (plugin store format)
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Package release assets (plugin store format)
+        run: |
+          set -eu
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p dist
+          package() {
+            artifact="$1"; goos="$2"; goarch="$3"; ext="$4"
+            lib="$(find "artifacts/$artifact" -type f | head -1)"
+            zip_name="grok2api-egress_${VERSION}_${goos}_${goarch}.zip"
+            # Plugin ID is derived from the library filename: must be
+            # grok2api-egress.<ext> at the zip root.
+            mkdir -p stage
+            cp "$lib" "stage/grok2api-egress.$ext"
+            (cd stage && zip -q "../dist/$zip_name" "grok2api-egress.$ext")
+            rm -rf stage
+            echo "packed $zip_name"
+          }
+          package grok2api-egress-linux-amd64   linux   amd64   so
+          package grok2api-egress-linux-arm64   linux   arm64   so
+          package grok2api-egress-windows-amd64 windows amd64   dll
+          (cd dist && shasum -a 256 *.zip > checksums.txt)
+          ls -la dist
+          echo "--- checksums.txt ---"
+          cat dist/checksums.txt
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
