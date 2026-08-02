@@ -1,4 +1,4 @@
-name: build-cpa
+name: build-grok2api-egress
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: cpa
+        working-directory: cpa-plugin/go
     steps:
       - uses: actions/checkout@v4
 
@@ -59,7 +59,7 @@ jobs:
             cc: x86_64-w64-mingw32-gcc
     defaults:
       run:
-        working-directory: cpa
+        working-directory: cpa-plugin/go
     steps:
       - uses: actions/checkout@v4
 
@@ -81,18 +81,18 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CC: ${{ matrix.cc }}
-        run: go build -buildmode=c-shared -o "cpa-${{ matrix.target }}.${{ matrix.ext }}" .
+        run: go build -buildmode=c-shared -trimpath -o "grok2api-egress-${{ matrix.target }}.${{ matrix.ext }}" .
 
       - name: Verify output
         run: |
-          file "cpa-${{ matrix.target }}.${{ matrix.ext }}"
-          ls -la "cpa-${{ matrix.target }}.${{ matrix.ext }}"
+          file "grok2api-egress-${{ matrix.target }}.${{ matrix.ext }}"
+          ls -la "grok2api-egress-${{ matrix.target }}.${{ matrix.ext }}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cpa-${{ matrix.target }}
-          path: cpa/cpa-${{ matrix.target }}.${{ matrix.ext }}
+          name: grok2api-egress-${{ matrix.target }}
+          path: cpa-plugin/go/grok2api-egress-${{ matrix.target }}.${{ matrix.ext }}
           if-no-files-found: error
 
   release:
@@ -116,18 +116,18 @@ jobs:
           package() {
             artifact="$1"; goos="$2"; goarch="$3"; ext="$4"
             lib="$(find "artifacts/$artifact" -type f | head -1)"
-            zip_name="cpa_${VERSION}_${goos}_${goarch}.zip"
-            # Plugin ID is derived from the library filename: must be cpa.<ext>
-            # at the zip root.
+            zip_name="grok2api-egress_${VERSION}_${goos}_${goarch}.zip"
+            # Plugin ID is derived from the library filename: must be
+            # grok2api-egress.<ext> at the zip root.
             mkdir -p stage
-            cp "$lib" "stage/cpa.$ext"
-            (cd stage && zip -q "../dist/$zip_name" "cpa.$ext")
+            cp "$lib" "stage/grok2api-egress.$ext"
+            (cd stage && zip -q "../dist/$zip_name" "grok2api-egress.$ext")
             rm -rf stage
             echo "packed $zip_name"
           }
-          package cpa-linux-amd64   linux   amd64   so
-          package cpa-linux-arm64   linux   arm64   so
-          package cpa-windows-amd64 windows amd64   dll
+          package grok2api-egress-linux-amd64   linux   amd64   so
+          package grok2api-egress-linux-arm64   linux   arm64   so
+          package grok2api-egress-windows-amd64 windows amd64   dll
           (cd dist && shasum -a 256 *.zip > checksums.txt)
           ls -la dist
           echo "--- checksums.txt ---"
