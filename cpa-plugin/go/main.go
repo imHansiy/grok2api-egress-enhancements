@@ -75,7 +75,7 @@ import (
 
 const (
 	pluginName          = "grok2api-egress"
-	pluginVersion       = "1.0.4"
+	pluginVersion       = "1.0.5"
 	resourcePath        = "/status"
 	managementAPIPath   = "/v0/management/grok2api-egress/api"
 	resourceContentType = "text/html; charset=utf-8"
@@ -271,7 +271,13 @@ func configure(raw []byte) error {
 
 func pluginRegistration() registration {
 	return registration{
-		SchemaVersion: pluginabi.SchemaVersion,
+		// Advertise schema version 1 for host compatibility. The v7 SDK
+		// currently reports SchemaVersion=2 (request lifecycle completion),
+		// but hosts on v7.2.99 and earlier reject schema_version > 1 with
+		// "plugin schema version 2 is not supported" and drop the plugin
+		// (unregistered, no menu). We only use management_api and
+		// usage_plugin, both of which existed since schema version 1.
+		SchemaVersion: 1,
 		Metadata: pluginapi.Metadata{
 			Name:             pluginName,
 			Version:          pluginVersion,
