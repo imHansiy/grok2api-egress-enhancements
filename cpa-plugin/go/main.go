@@ -75,7 +75,7 @@ import (
 
 const (
 	pluginName          = "grok2api-egress"
-	pluginVersion       = "1.0.3"
+	pluginVersion       = "1.0.4"
 	resourcePath        = "/status"
 	managementAPIPath   = "/v0/management/grok2api-egress/api"
 	resourceContentType = "text/html; charset=utf-8"
@@ -261,7 +261,11 @@ func configure(raw []byte) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	workerCancel = cancel
 	startGuardWorker(ctx, store)
-	refreshAssignedCounts(store)
+	// Assigned counts are refreshed asynchronously by the guard worker
+	// (30s ticker). Avoid calling host.auth.list synchronously during
+	// plugin.register/reconfigure: the host callback context may not be
+	// ready yet, and a failing/panicking callback here can fuse the plugin
+	// and leave it in the "unregistered" state.
 	return nil
 }
 

@@ -6,7 +6,7 @@
       "name": "CPA Egress Guard",
       "description": "EN: Native CLIProxyAPI (CPA) egress quality-guard plugin. Manages egress nodes, quality detection and quarantine policy directly inside CPA: unified node management, per-node output tokens/second audit, active/passive/hybrid guard policy, automatic quarantine and recovery, and a management dashboard. Uses only CPA capabilities (Management UI + Usage Plugin) and does not require grok2api admin credentials. | 中文: 原生 CLIProxyAPI（CPA）出口质量守护插件。在 CPA 内直接管理出口节点、质量检测与隔离策略：统一节点管理、按节点输出 Token/秒审计、主动/被动/混合守护策略、自动隔离与恢复，以及管理面板。仅使用 CPA 能力（管理界面 + 用量插件），无需 grok2api 管理员凭据。",
       "author": "lij768423-svg",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "repository": "https://github.com/imHansiy/grok2api-egress-enhancements",
       "logo": "",
       "homepage": "https://github.com/imHansiy/grok2api-egress-enhancements/tree/main/cpa-plugin",
