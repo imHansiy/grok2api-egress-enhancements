@@ -406,7 +406,7 @@ func migrateAuthsOffNode(store *stateStore, bad *nodeRecord) error {
 		}
 		moved++
 	}
-	refreshAssignedCounts(store)
+	// Assigned counts refresh asynchronously via the guard worker.
 	if moved > 0 {
 		store.appendEvent(guardEvent{
 			Event:    "accounts_migrated",
