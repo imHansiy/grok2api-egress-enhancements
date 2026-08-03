@@ -8,7 +8,7 @@
 | | |
 |---|---|
 | 插件名 | `grok2api-egress` |
-| 当前版本 | **1.0.3** |
+| 当前版本 | **1.0.6** |
 | 语言 | Go (`-buildmode=c-shared` → `.so`) |
 | CPA SDK | `CLIProxyAPI/v7` (`pluginabi` / `pluginapi`) |
 | 能力 | Management UI + Usage Plugin |
@@ -175,7 +175,54 @@ go build -buildmode=c-shared -o grok2api-egress.so .
 
 ---
 
-## 安装（CPA）
+## 在线安装（插件商店，推荐）
+
+本插件已接入 **CPA 插件商店**：无需手动拷贝 `.so`，从 CPA 管理台直接安装/更新。
+
+### 1. 添加商店源（store-sources）
+
+在 CPA `config.yaml` 的 `plugins` 段添加本仓库的 registry 地址：
+
+```yaml
+plugins:
+  enabled: true
+  dir: "plugins"
+  store-sources:
+    - "https://raw.githubusercontent.com/lij768423-svg/grok2api-egress-enhancements/main/registry.json"
+```
+
+重启 CPA 后，进入管理台 → **插件 → 插件商店**，即可看到 **CPA Egress Guard**（`grok2api-egress`）。
+
+### 2. 安装 / 更新
+
+- **管理台**：插件商店 → CPA Egress Guard → **安装**；已安装时 **重新安装** 可升级到最新 Release。
+- **命令行**（`<management-key>` 为 CPA 管理密钥）：
+
+```bash
+# 安装
+curl -X POST \
+  -H "Authorization: Bearer <management-key>" \
+  http://127.0.0.1:8317/v0/management/plugin-store/grok2api-egress/install
+
+# 指定版本安装/升级
+curl -X POST \
+  -H "Authorization: Bearer <management-key>" \
+  "http://127.0.0.1:8317/v0/management/plugin-store/grok2api-egress/install?version=1.0.6"
+```
+
+宿主会自动下载 GitHub Release 资产（`grok2api-egress_<版本>_<goos>_<goarch>.zip`），
+校验 `checksums.txt` 后写入插件目录（如 `plugins/linux/amd64/grok2api-egress-v1.0.6.so`）并热加载。
+
+### 3. 发布机制（供维护者参考）
+
+- 仓库根 `registry.json`：插件商店注册清单（`id` 必须与动态库文件名一致，即 `grok2api-egress`）。
+- `.github/workflows/build-grok2api-egress.yml`：push 到 `main` 自动执行 `go vet` + `go test` + 多平台构建
+  （linux-amd64 / linux-arm64 / windows-amd64）；推送 `v*` tag 时自动发布商店格式 Release
+  （zip 根目录直接为 `grok2api-egress.so`/`.dll` + `checksums.txt`）。
+
+---
+
+## 手动安装（CPA）
 
 1. 复制插件：
 
