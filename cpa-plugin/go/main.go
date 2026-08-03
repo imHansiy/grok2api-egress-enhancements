@@ -75,7 +75,7 @@ import (
 
 const (
 	pluginName          = "grok2api-egress"
-	pluginVersion       = "1.0.4"
+	pluginVersion       = "1.0.7"
 	resourcePath        = "/status"
 	managementAPIPath   = "/v0/management/grok2api-egress/api"
 	resourceContentType = "text/html; charset=utf-8"
@@ -261,13 +261,22 @@ func configure(raw []byte) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	workerCancel = cancel
 	startGuardWorker(ctx, store)
-	refreshAssignedCounts(store)
+	// Assigned counts are refreshed asynchronously by the guard worker
+	// (30s ticker). Avoid calling host.auth.list synchronously during
+	// plugin.register/reconfigure: some hosts do not service the callback
+	// while the register RPC is in flight, which blocks registration.
 	return nil
 }
 
 func pluginRegistration() registration {
 	return registration{
-		SchemaVersion: pluginabi.SchemaVersion,
+		// Advertise schema version 1 for host compatibility. The v7 SDK
+		// currently reports SchemaVersion=2, but hosts on v7.2.99 and
+		// earlier reject schema_version > 1 ("plugin schema version 2 is
+		// not supported") and drop the plugin: UI shows "unregistered"
+		// with no menu entry. We only use management_api and usage_plugin,
+		// both of which existed since schema version 1.
+		SchemaVersion: 1,
 		Metadata: pluginapi.Metadata{
 			Name:             pluginName,
 			Version:          pluginVersion,
@@ -382,7 +391,8 @@ func dispatchAPI(method, path string, query url.Values, body json.RawMessage) ([
 
 	case path == "/nodes":
 		if method == http.MethodGet {
-			refreshAssignedCounts(store)
+			// Assigned counts refresh asynchronously via the guard worker;
+			// host.auth.list blocks management RPCs on some hosts.
 			items := store.listNodes()
 			out := make([]map[string]any, 0, len(items))
 			for _, n := range items {
@@ -622,7 +632,8 @@ func dispatchAPI(method, path string, query url.Values, body json.RawMessage) ([
 
 func buildStatus() map[string]any {
 	ensureStore()
-	refreshAssignedCounts(store)
+	// Assigned counts refresh asynchronously via the guard worker;
+	// host.auth.list blocks management RPCs on some hosts.
 	nodes := store.listNodes()
 	nodeMap := map[string]any{}
 	for _, n := range nodes {
@@ -796,7 +807,37 @@ func mustJSON(v any) []byte {
 	return raw
 }
 
+// callHostTimeout caps how long a host callback may take. Some hosts do not
+// service host.auth.* callbacks while a management.handle RPC is in flight,
+// which would otherwise block the plugin thread forever (the management
+// request then ends in "context canceled" after minutes). A bounded timeout
+// turns that hang into a fast, visible error.
+const callHostTimeout = 8 * time.Second
+
 func callHost(method string, payload []byte) (json.RawMessage, error) {
+	type result struct {
+		raw json.RawMessage
+		err error
+	}
+	done := make(chan result, 1)
+	go func() {
+		defer func() {
+			if recovered := recover(); recovered != nil {
+				done <- result{err: fmt.Errorf("host callback %s panic: %v", method, recovered)}
+			}
+		}()
+		raw, err := callHostBlocking(method, payload)
+		done <- result{raw: raw, err: err}
+	}()
+	select {
+	case res := <-done:
+		return res.raw, res.err
+	case <-time.After(callHostTimeout):
+		return nil, fmt.Errorf("host callback %s timed out after %s", method, callHostTimeout)
+	}
+}
+
+func callHostBlocking(method string, payload []byte) (json.RawMessage, error) {
 	cMethod := C.CString(method)
 	defer C.free(unsafe.Pointer(cMethod))
 	var response C.cliproxy_buffer
